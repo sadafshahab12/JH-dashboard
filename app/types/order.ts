@@ -1,21 +1,4 @@
-/* ---------- SANITY HELPERS ---------- */
-
-export interface SanityReference {
-  _type: "reference";
-  _ref: string;
-}
-
-export interface SanityFileReference {
-  _type: "file";
-  asset: SanityReference;
-}
-
-export interface SanityImageReference {
-  _type: "image";
-  asset: SanityReference;
-}
-
-
+export type OrderSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
 export interface OrderCustomer {
   fullName: string;
@@ -29,82 +12,7 @@ export interface OrderCustomer {
 
 /* ---------- ORDER ITEM ---------- */
 
-export type OrderSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 export type CurrencyMode = "pk" | "intl";
-
-export interface OrderItem {
-  _key: string;
-  product: SanityReference;
-  variantId: string;
-  size: OrderSize;
-  color: string;
-  colorCode: string;
-  quantity: number;
-  price: number;
-  priceMode: CurrencyMode;
-}
-
-/* ---------- PAYMENT ---------- */
-
-export interface OrderPayment {
-  method: "EasyPaisa";
-  receipt?: SanityFileReference;
-}
-
-/* ---------- STORED ORDER (SANITY) ---------- */
-
-export interface Order {
-  _id?: string;
-  _createdAt?: string;
-  _type: "order";
-
-  orderNumber: string;
-  customer: OrderCustomer;
-  currencyMode: CurrencyMode;
-  items: OrderItem[];
-  payment: OrderPayment;
-
-  subtotal: number;
-  shippingFee: number;
-  total: number;
-
-  status: OrderStatus;
-}
-
-/* ---------- CREATE ORDER PAYLOAD ---------- */
-
-export interface CreateOrderPayload {
-  _type: "order";
-
-  orderNumber?: string;
-
-  customer: OrderCustomer;
-  currencyMode: CurrencyMode;
-
-  items: {
-    _key: string;
-    product: SanityReference;
-    variantId: string;
-    size: OrderSize;
-    color: string;
-    colorCode: string;
-    quantity: number;
-    price: number;
-    priceMode: CurrencyMode;
-  }[];
-
-  subtotal: number;
-  shippingFee: number;
-  total: number;
-
-  payment: {
-    method: "EasyPaisa";
-    // Use this only if you upload receipt separately
-    receiptAssetId?: string;
-  };
-}
-
-/* ---------- POPULATED ORDER TYPES ---------- */
 
 export interface PopulatedOrderItem {
   product: {
@@ -121,20 +29,7 @@ export interface PopulatedOrderItem {
   price: number;
   priceMode: CurrencyMode;
 }
-
-export interface PopulatedOrder {
-  _id?: string;
-  _type: "order";
-  orderNumber: string;
-  customer: OrderCustomer;
-  currencyMode: CurrencyMode;
-  items: PopulatedOrderItem[];
-  payment: OrderPayment;
-  subtotal: number;
-  shippingFee: number;
-  total: number;
-  status: OrderStatus;
-}
+export type ProductType = "all" | "apparel" | "stationery";
 //real data type
 export type OrderStatus =
   | "pending"
@@ -143,3 +38,39 @@ export type OrderStatus =
   | "shipped"
   | "completed"
   | "cancelled";
+export interface OrderProduct {
+  _id: string;
+  name: string;
+  slug: { current: string };
+  baseImage?: { asset: { url: string } };
+}
+export interface OrderItem {
+  product: OrderProduct;
+  variantId: string;
+  size: OrderSize;
+  color: string;
+  colorCode: string;
+  quantity: number;
+  price: number;
+  priceMode: CurrencyMode;
+  productType: "apparel" | "stationery";
+}
+export interface Order {
+  _id: string;
+  orderNumber: string;
+  customer: OrderCustomer;
+  currencyMode: CurrencyMode;
+  items: OrderItem[];
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  status: OrderStatus;
+  _createdAt: string;
+  payment?: {
+    receipt?: {
+      asset?: {
+        url?: string;
+      };
+    };
+  };
+}
