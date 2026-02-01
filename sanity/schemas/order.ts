@@ -64,6 +64,20 @@ export const order = defineType({
       ],
     }),
 
+    /* ---------- CURRENCY MODE ---------- */
+    defineField({
+      name: "currencyMode",
+      title: "Currency Mode",
+      type: "string",
+      initialValue: "pk",
+      options: {
+        list: [
+          { title: "PKR", value: "pk" },
+          { title: "USD", value: "intl" },
+        ],
+      },
+    }),
+
     /* ---------- ORDER ITEMS ---------- */
     defineField({
       name: "items",
@@ -73,7 +87,7 @@ export const order = defineType({
       of: [
         defineField({
           name: "item",
-          title: "Item",
+          title: "Order Item",
           type: "object",
           fields: [
             defineField({
@@ -83,41 +97,60 @@ export const order = defineType({
               to: [{ type: "product" }],
               validation: (Rule) => Rule.required(),
             }),
+
             defineField({
               name: "variantId",
               title: "Variant ID",
               type: "string",
               validation: (Rule) => Rule.required(),
             }),
+
             defineField({
               name: "size",
               title: "Size",
               type: "string",
               validation: (Rule) => Rule.required(),
             }),
+
             defineField({
               name: "color",
               title: "Color",
               type: "string",
               validation: (Rule) => Rule.required(),
             }),
+
             defineField({
               name: "colorCode",
               title: "Color Code",
               type: "string",
               validation: (Rule) => Rule.required(),
             }),
+
             defineField({
               name: "quantity",
               title: "Quantity",
               type: "number",
               validation: (Rule) => Rule.required().min(1),
             }),
+
             defineField({
               name: "price",
               title: "Price (Single Item)",
               type: "number",
               validation: (Rule) => Rule.required().min(0),
+            }),
+
+            defineField({
+              name: "priceMode",
+              title: "Price Mode",
+              type: "string",
+              initialValue: "pk",
+              options: {
+                list: [
+                  { title: "PKR", value: "pk" },
+                  { title: "USD", value: "intl" },
+                ],
+              },
             }),
           ],
         }),

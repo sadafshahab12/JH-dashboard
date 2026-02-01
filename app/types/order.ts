@@ -15,17 +15,7 @@ export interface SanityImageReference {
   asset: SanityReference;
 }
 
-/* ---------- ORDER STATUS ---------- */
 
-export type OrderStatus =
-  | "pending"
-  | "paid"
-  | "processing"
-  | "shipped"
-  | "completed"
-  | "cancelled";
-
-/* ---------- CUSTOMER ---------- */
 
 export interface OrderCustomer {
   fullName: string;
@@ -146,3 +136,10 @@ export interface PopulatedOrder {
   status: OrderStatus;
 }
 //real data type
+export type OrderStatus =
+  | "pending"
+  | "paid"
+  | "processing"
+  | "shipped"
+  | "completed"
+  | "cancelled";

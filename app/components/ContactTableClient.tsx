@@ -232,7 +232,8 @@ export default function ContactTableClient({
                         <Image
                           src={thumb}
                           alt="thumbnail"
-                          fill
+                          width={800}
+                          height={800}
                           className="object-cover"
                         />
                       </button>
@@ -303,7 +304,8 @@ export default function ContactTableClient({
                       <Image
                         src={thumb}
                         alt="ref"
-                        fill
+                        width={800}
+                        height={800}
                         className="object-cover"
                       />
                     </button>
@@ -456,7 +458,8 @@ export default function ContactTableClient({
               <Image
                 src={selectedImage}
                 alt="Reference"
-                fill
+                width={800}
+                height={800}
                 className="object-contain"
                 unoptimized
               />
