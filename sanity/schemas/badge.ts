@@ -22,7 +22,7 @@ export const badge = defineType({
       title: "Badge Text Color",
       type: "string",
       description: "Hex code  (e.g. #ff0000 for red)",
-      initialValue: "#000000", // Default black
+      initialValue: "#000000",
     }),
   ],
 });

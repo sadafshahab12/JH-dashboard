@@ -16,8 +16,13 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
-
+import { useRouter } from "next/navigation";
+interface ApiResponse {
+  success: boolean;
+  message: string;
+}
 export default function ContactTableClient({
   initialData = [],
 }: {
@@ -28,8 +33,8 @@ export default function ContactTableClient({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  // Pagination State
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
@@ -86,7 +91,31 @@ export default function ContactTableClient({
     startIndex,
     startIndex + itemsPerPage,
   );
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this inquiry?")) return;
 
+    setIsDeleting(id); // Start loading state for this ID
+    try {
+      const response = await fetch("/api/contact/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      const result: ApiResponse = await response.json();
+
+      if (result.success) {
+        router.refresh(); // Sanity data re-fetch karega
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      alert("Something went wrong!");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
   // --- Actions ---
   const downloadPDF = () => {
     const doc = new jsPDF("landscape");
@@ -270,12 +299,23 @@ export default function ContactTableClient({
                     </div>
                   </td>
                   <td className="p-4 text-right">
-                    <button
-                      onClick={() => copyToClipboard(item)}
-                      className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </button>
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => copyToClipboard(item)}
+                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                      <button
+                        disabled={isDeleting === item._id}
+                        onClick={() => handleDelete(item._id)}
+                        className={`p-2 rounded-lg transition ${isDeleting === item._id ? "text-slate-300" : "text-slate-400 hover:text-red-600 hover:bg-red-50"}`}
+                      >
+                        <Trash2
+                          className={`h-4 w-4 ${isDeleting === item._id ? "animate-pulse" : ""}`}
+                        />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -319,12 +359,20 @@ export default function ContactTableClient({
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => copyToClipboard(item)}
-                  className="p-2 bg-slate-50 border rounded-lg shrink-0"
-                >
-                  <Copy className="h-4 w-4 text-slate-500" />
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => copyToClipboard(item)}
+                    className="p-2 bg-slate-50 border rounded-lg shrink-0"
+                  >
+                    <Copy className="h-4 w-4 text-slate-500" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className="p-2 bg-red-50 border border-red-100 rounded-lg text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">

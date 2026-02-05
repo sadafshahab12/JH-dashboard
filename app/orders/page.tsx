@@ -18,10 +18,9 @@ import {
   Package,
   User,
   MapPin,
-  ClipboardCheck,
   RotateCcw,
 } from "lucide-react";
-import { CurrencyMode, Order, OrderStatus, ProductType } from "../types/order";
+import { Order, OrderStatus, ProductType } from "../types/order";
 import StatusSelect from "../components/StatusSelect";
 import ProductViewModal from "../components/ProductViewModal";
 import ReceiptModal from "../components/ReceiptModal";
@@ -66,8 +65,6 @@ export default function OrdersPage() {
       const matchStatus =
         statusFilter === "all" ? true : order.status === statusFilter;
 
-      // 4. Product Type Filtering (NEW)
-      // Hum .some() use kar rahe hain taake agar order mein mix items hon toh match mil jaye
       const matchType =
         typeFilter === "all"
           ? true
@@ -78,10 +75,10 @@ export default function OrdersPage() {
         (!from || created >= from) &&
         (!to || created <= to) &&
         matchStatus &&
-        matchType // <--- Inculde this
+        matchType
       );
     });
-  }, [orders, search, fromDate, toDate, statusFilter, typeFilter]); // Add typeFilter to dependency array
+  }, [orders, search, fromDate, toDate, statusFilter, typeFilter]);
   const totalPages = Math.ceil(filteredOrders.length / rowsPerPage);
 
   const paginatedOrders = useMemo(() => {
@@ -102,7 +99,7 @@ export default function OrdersPage() {
     const itemDetails = order.items
       .map(
         (item) =>
-          `- ${item.product.name} [${item.size}/${item.color}]\n  ${item.quantity} x ${item.priceMode === "intl" ? "$" : "PKR"}${item.price.toFixed(2)} = ${item.priceMode === "intl" ? "$" : "PKR"}${(item.quantity * item.price).toFixed(2)}`,
+          `- ${item.product.name} [${item.productType === "stationery" ? item.pageType : item.size}/${item.color}]\n  ${item.quantity} x ${item.priceMode === "intl" ? "$" : "PKR"}${item.price.toFixed(2)} = ${item.priceMode === "intl" ? "$" : "PKR"}${(item.quantity * item.price).toFixed(2)}`,
       )
       .join("\n");
 
@@ -179,7 +176,9 @@ export default function OrdersPage() {
         new Date(o._createdAt).toLocaleDateString("en-GB"),
         `${o.customer.fullName}\n${o.customer.email}`,
         types.toUpperCase(), // Yahan type display hoga
-        o.items.map((i) => `${i.product.name} (${i.size})`).join(", "),
+        o.items
+          .map((i) => `${i.product.name} (${i.size || i.pageType || "N/A"})`)
+          .join(", "),
         `${o.currencyMode === "intl" ? "$" : "PKR"} ${o.total.toFixed(2)}`,
         o.status.toUpperCase(),
       ];
@@ -217,7 +216,7 @@ export default function OrdersPage() {
       Products: o.items
         .map(
           (i) =>
-            `${i.product.name} [${i.productType}] (Size: ${i.size}, Color: ${i.color}, Price: ${i.price}, Qty: ${i.quantity})`,
+            `${i.product.name} [${i.productType}] (${i.size ? `Size: ${i.size}` : ""}${i.pageType ? `Pages: ${i.pageType}` : ""}, Color: ${i.color}, Price: ${i.price}, Qty: ${i.quantity})`,
         )
         .join(" | "),
       Subtotal: o.subtotal,
@@ -350,6 +349,7 @@ export default function OrdersPage() {
             >
               <option value="all">All Categories</option>
               <option value="apparel">Apparel</option>
+              <option value="mug">Mugs</option>
               <option value="stationery">Stationery</option>
             </select>
           </div>
@@ -441,8 +441,15 @@ export default function OrdersPage() {
                 <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                   Customer Info
                 </th>
+
                 <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                   Destination
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
+                  Sub Total
+                </th>
+                <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
+                  Shipping
                 </th>
                 <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
                   Amount
@@ -506,11 +513,22 @@ export default function OrdersPage() {
                       </div>
                     </div>
                   </td>
+                  <td className="px-6 py-5 text-center">
+                    <div className="text-xs font-bold text-slate-500">
+                      PKR {order.subtotal?.toFixed(2)}
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-5 text-center">
+                    <div className="text-xs font-bold text-slate-500">
+                      {order.currencyMode === "intl" ? "$" : "PKR"}{" "}
+                      {order.shippingFee?.toFixed(2) || "0.00"}
+                    </div>
+                  </td>
                   <td className="px-6 py-5 text-center font-bold text-sm text-slate-900">
                     {order.currencyMode === "intl" ? "$" : "PKR"}{" "}
                     {order.total.toFixed(2)}
                   </td>
-
                   <td className="px-6 py-5 text-center">
                     <StatusSelect
                       status={order.status}
@@ -529,7 +547,9 @@ export default function OrdersPage() {
                           className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${
                             type === "apparel"
                               ? "bg-blue-50 text-blue-600 border-blue-100"
-                              : "bg-orange-50 text-orange-600 border-orange-100"
+                              : type === "stationery"
+                                ? "bg-orange-50 text-orange-600 border-orange-100"
+                                : "bg-purple-50 text-purple-600 border-purple-100"
                           }`}
                         >
                           {type || "N/A"}
@@ -626,41 +646,26 @@ export default function OrdersPage() {
         </div>
 
         {/* MOBILE CARDS */}
+
         <div className="lg:hidden space-y-4">
           {paginatedOrders.map((order) => (
             <div
               key={order._id}
-              className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-5"
+              className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
             >
-              <div className="flex justify-between items-start">
-                <div className="flex gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-white">
-                    <Package size={20} />
+              {/* 1. Header: Order ID & Status */}
+              <div className="p-4 flex justify-between items-center bg-slate-50/50 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
+                    <Package size={16} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">
                       #{order.orderNumber}
                     </p>
-                    <h3 className="font-bold text-slate-900">
-                      {order.customer.fullName}
-                    </h3>
-                    {/* PRODUCT TYPE BADGES FOR MOBILE */}
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {Array.from(
-                        new Set(order.items.map((i) => i.productType)),
-                      ).map((type) => (
-                        <span
-                          key={type}
-                          className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tight border ${
-                            type === "apparel"
-                              ? "bg-blue-50 text-blue-600 border-blue-100"
-                              : "bg-orange-50 text-orange-600 border-orange-100"
-                          }`}
-                        >
-                          {type}
-                        </span>
-                      ))}
-                    </div>
+                    <p className="text-[10px] text-slate-400 font-bold mt-1">
+                      {new Date(order._createdAt).toLocaleDateString("en-GB")}
+                    </p>
                   </div>
                 </div>
                 <StatusSelect
@@ -670,97 +675,153 @@ export default function OrdersPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-50">
+              {/* 2. Customer & Items Info */}
+              <div className="p-4 flex justify-between items-start">
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
-                    Total
-                  </p>
-                  <p className="text-lg font-black text-slate-900">
-                    {order.currencyMode === "intl" ? "$" : "PKR"}{" "}
-                    {order.total.toFixed(2)}
-                  </p>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    {order.customer.fullName}
+                  </h3>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {Array.from(
+                      new Set(order.items.map((i) => i.productType)),
+                    ).map((type) => (
+                      <span
+                        key={type}
+                        className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-600 border border-slate-200"
+                      >
+                        {type}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase">
                     Items
                   </p>
-                  <p className="text-sm font-bold text-slate-700">
+                  <p className="text-xs font-bold text-slate-700">
                     {order.items.length} Products
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-bold">
-                    {new Date(order._createdAt).toLocaleDateString("en-GB")}
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons remain the same */}
-              <div className="flex gap-2">
+              {/* 3. Pricing Card (Full Width) */}
+              <div className="px-4 pb-2">
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 space-y-2">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-slate-400 font-bold uppercase">
+                      Subtotal
+                    </span>
+                    <span className="text-slate-700 font-bold">
+                      {order.currencyMode === "intl" ? "$" : "PKR"}{" "}
+                      {order.subtotal?.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-slate-400 font-bold uppercase">
+                      Shipping
+                    </span>
+                    <span className="text-emerald-600 font-bold">
+                      +{order.currencyMode === "intl" ? "$" : "Rs"}{" "}
+                      {order.shippingFee}
+                    </span>
+                  </div>
+                  <div className="border-t border-dashed border-slate-200 my-1" />
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        Final Amount
+                      </p>
+                      <p className="text-lg font-black text-indigo-600">
+                        {order.currencyMode === "intl" ? "$" : "PKR"}{" "}
+                        {order.total.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="bg-white px-2 py-1 rounded border border-slate-200 shadow-sm text-right">
+                      <p className="text-[8px] font-bold text-slate-400 uppercase leading-none">
+                        Method
+                      </p>
+                      <p className="text-[10px] font-black text-slate-700 uppercase">
+                        {order.payment?.method || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Action Buttons */}
+              <div className="p-4 grid grid-cols-4 gap-2">
                 <button
                   onClick={() => setViewProductsOrder(order)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border border-slate-100"
+                  className="flex items-center justify-center py-2.5 bg-slate-50 text-slate-600 rounded-xl border border-slate-100"
                 >
-                  <Eye size={14} />
+                  <Eye size={16} />
                 </button>
                 <button
                   onClick={() => copyOrder(order)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 text-slate-700 rounded-xl text-xs font-bold border border-slate-100"
+                  className="flex items-center justify-center py-2.5 bg-slate-50 text-slate-600 rounded-xl border border-slate-100"
                 >
-                  <Copy size={14} />
+                  <Copy size={16} />
                 </button>
-                {order.payment?.receipt?.asset?.url && (
+                {order.payment?.receipt?.asset?.url ? (
                   <button
                     onClick={() => setSelectedOrder(order)}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-bold border border-emerald-100"
+                    className="flex items-center justify-center py-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100"
                   >
-                    <ExternalLink size={14} />
+                    <ExternalLink size={16} />
                   </button>
+                ) : (
+                  <div className="flex items-center justify-center py-2.5 bg-slate-50 text-slate-300 rounded-xl border border-slate-100 cursor-not-allowed">
+                    <ExternalLink size={16} />
+                  </div>
                 )}
                 <button
                   onClick={() => deleteOrder(order._id)}
-                  className="p-2.5 bg-rose-50 text-rose-600 rounded-xl border border-rose-100"
+                  className="flex items-center justify-center py-2.5 bg-rose-50 text-rose-600 rounded-xl border border-rose-100"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
           ))}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm">Rows per page:</span>
+
+          {/* Pagination Section fix */}
+          <div className="flex flex-col gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex justify-between items-center border-b border-slate-50 pb-3">
+              <span className="text-xs font-bold text-slate-500 uppercase">
+                Rows per page
+              </span>
               <select
                 value={rowsPerPage}
                 onChange={(e) => {
                   setRowsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="border border-slate-200 rounded-xl px-3 py-2"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold outline-none"
               >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
+                {[5, 10, 20, 50].map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
               </select>
             </div>
-
-            <div className="flex items-center gap-2">
+            <div className="flex justify-between items-center">
               <button
                 onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-4 py-2 rounded-xl bg-slate-100 font-bold"
+                className="p-2 px-4 rounded-xl bg-slate-100 font-bold text-xs disabled:opacity-50"
               >
                 Prev
               </button>
-
-              <span className="font-bold">
+              <span className="text-xs font-black text-slate-900">
                 Page {currentPage} of {totalPages || 1}
               </span>
-
               <button
                 onClick={() =>
                   setCurrentPage((p) => Math.min(p + 1, totalPages))
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold"
+                className="p-2 px-4 rounded-xl bg-slate-900 text-white font-bold text-xs"
               >
                 Next
               </button>

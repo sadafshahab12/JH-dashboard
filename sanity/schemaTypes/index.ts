@@ -7,6 +7,7 @@ import review from "../schemas/review";
 import shippingCost from "../schemas/shippingCost";
 import { sizeGuide } from "../schemas/sizeGuide";
 import contact from "../schemas/contact";
+import { mugSizeGuide } from "../schemas/mugSizeGuide";
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -18,5 +19,6 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     shippingCost,
     sizeGuide,
     contact,
+    mugSizeGuide,
   ],
 };

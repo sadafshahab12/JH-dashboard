@@ -12,6 +12,7 @@ export const ORDERS_QUERY = groq`
   currencyMode,
   customer,
   payment{
+    method, // Method bhi add kar diya taake dashboard pe nazar aaye
     receipt{
       asset->{url}
     }
@@ -25,6 +26,7 @@ export const ORDERS_QUERY = groq`
     price,
     priceMode,
     productType,
+    pageType, 
     product->{
       _id,
       name,

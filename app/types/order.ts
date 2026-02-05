@@ -1,4 +1,13 @@
-export type OrderSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
+export type OrderSize =
+  | "XS"
+  | "S"
+  | "M"
+  | "L"
+  | "XL"
+  | "XXL"
+  | "11oz"
+  | "15oz"
+  | string;
 
 export interface OrderCustomer {
   fullName: string;
@@ -22,14 +31,14 @@ export interface PopulatedOrderItem {
     price: number;
   };
   variantId: string;
-  size: OrderSize;
+  size?: OrderSize;
   color: string;
   colorCode: string;
   quantity: number;
   price: number;
   priceMode: CurrencyMode;
 }
-export type ProductType = "all" | "apparel" | "stationery";
+export type ProductType = "all" | "apparel" | "stationery" | "mug";
 //real data type
 export type OrderStatus =
   | "pending"
@@ -47,13 +56,14 @@ export interface OrderProduct {
 export interface OrderItem {
   product: OrderProduct;
   variantId: string;
-  size: OrderSize;
+  size?: OrderSize;
   color: string;
   colorCode: string;
   quantity: number;
   price: number;
   priceMode: CurrencyMode;
-  productType: "apparel" | "stationery";
+  productType: "apparel" | "stationery" | "mug";
+  pageType?: string;
 }
 export interface Order {
   _id: string;
@@ -67,6 +77,7 @@ export interface Order {
   status: OrderStatus;
   _createdAt: string;
   payment?: {
+    method?: string;
     receipt?: {
       asset?: {
         url?: string;
