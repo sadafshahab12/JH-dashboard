@@ -431,8 +431,8 @@ export default function OrdersPage() {
         </div>
 
         {/* DESKTOP TABLE */}
-        <div className="hidden lg:block bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
-          <table className="w-full text-left">
+        <div className="hidden lg:block bg-white rounded-2xl shadow-xl border border-slate-100 overflow-x-auto">
+          <table className="w-full text-left min-w-300">
             <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
                 <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">
@@ -441,7 +441,6 @@ export default function OrdersPage() {
                 <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                   Customer Info
                 </th>
-
                 <th className="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                   Destination
                 </th>
@@ -479,6 +478,8 @@ export default function OrdersPage() {
                       {new Date(order._createdAt).toLocaleDateString("en-GB")}
                     </div>
                   </td>
+
+                  {/* Customer Info */}
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
@@ -494,18 +495,24 @@ export default function OrdersPage() {
                       </div>
                     </div>
                   </td>
+
+                  {/* FIXED: Destination / Address Cell */}
                   <td className="px-6 py-5">
-                    <div className="flex items-start gap-2 max-w-45">
+                    <div className="flex items-start gap-2 max-w-50">
+                      {" "}
+                      {/* Set a specific max width */}
                       <MapPin
                         size={14}
                         className="mt-0.5 text-slate-400 shrink-0"
                       />
-                      <div>
-                        <div className="text-xs font-bold text-slate-800">
+                      <div className="overflow-hidden">
+                        {" "}
+                        {/* Container for truncation */}
+                        <div className="text-xs font-bold text-slate-800 truncate">
                           {order.customer.city}, {order.customer.country}
                         </div>
                         <div
-                          className="text-[10px] text-slate-400 mt-0.5 truncate"
+                          className="text-[10px] text-slate-400 mt-0.5 "
                           title={order.customer.address}
                         >
                           {order.customer.address}
@@ -513,12 +520,13 @@ export default function OrdersPage() {
                       </div>
                     </div>
                   </td>
+
+                  {/* Rest of the columns... */}
                   <td className="px-6 py-5 text-center">
                     <div className="text-xs font-bold text-slate-500">
                       PKR {order.subtotal?.toFixed(2)}
                     </div>
                   </td>
-
                   <td className="px-6 py-5 text-center">
                     <div className="text-xs font-bold text-slate-500">
                       {order.currencyMode === "intl" ? "$" : "PKR"}{" "}
@@ -538,7 +546,6 @@ export default function OrdersPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {/* Hum uniquely types nikal rahe hain: e.g., "Apparel" aur "Stationery" */}
                       {Array.from(
                         new Set(order.items.map((i) => i.productType)),
                       ).map((type) => (
@@ -558,34 +565,31 @@ export default function OrdersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-5">
+                    {/* Action buttons stay as they are */}
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => setViewProductsOrder(order)}
-                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                        title="View Items"
+                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg"
                       >
                         <Eye size={18} />
                       </button>
                       <button
                         onClick={() => copyOrder(order)}
-                        className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-all"
-                        title="Copy Receipt Text"
+                        className="p-2 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg"
                       >
                         <Copy size={17} />
                       </button>
                       {order.payment?.receipt?.asset?.url && (
                         <button
                           onClick={() => setSelectedOrder(order)}
-                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                          title="View Payment Proof"
+                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
                         >
                           <ExternalLink size={17} />
                         </button>
                       )}
                       <button
                         onClick={() => deleteOrder(order._id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                        title="Delete Order"
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -675,13 +679,22 @@ export default function OrdersPage() {
                 />
               </div>
 
-              {/* 2. Customer & Items Info */}
-              <div className="p-4 flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-sm">
+              {/* 2. Customer, Address & Items Info */}
+              <div className="p-4 flex justify-between items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  {" "}
+                  {/* min-w-0 allows the address to truncate properly */}
+                  <h3 className="font-bold text-slate-900 text-sm truncate">
                     {order.customer.fullName}
                   </h3>
-                  <div className="flex flex-wrap gap-1 mt-1">
+                  {/* ADDED ADDRESS SECTION */}
+                  <div className="flex items-start gap-1 mt-1 text-slate-500">
+                    <MapPin size={12} className="mt-0.5 shrink-0" />
+                    <p className="text-[11px] leading-tight line-clamp-2">
+                      {order.customer.city}, {order.customer.address}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
                     {Array.from(
                       new Set(order.items.map((i) => i.productType)),
                     ).map((type) => (
@@ -694,7 +707,8 @@ export default function OrdersPage() {
                     ))}
                   </div>
                 </div>
-                <div className="text-right">
+
+                <div className="text-right shrink-0">
                   <p className="text-[10px] font-black text-slate-400 uppercase">
                     Items
                   </p>
